@@ -21,8 +21,7 @@ BLACK = (0, 0, 0)
 clock = pygame.time.Clock()
 FPS = 30
 
-# Шрифт для отображения счёта
-font = pygame.font.SysFont(None, 36)
+
 
 # Класс для шариков
 class Ball:
@@ -46,7 +45,8 @@ ball_spawn_time = 30  # Время между появлениями новых 
 ball_timer = 0
 
 score = 0  # Счётчик очков
-
+# Шрифт для отображения счёта
+font = pygame.font.SysFont(None, 36)
 def draw_score(surface, score):
     score_text = font.render(f'Score: {score}', True, BLACK)
     surface.blit(score_text, (10, 10))
@@ -61,12 +61,12 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        elif event.type == MOUSEBUTTONDOWN:
-            mouse_x, mouse_y = event.pos
+        elif event.type == MOUSEBUTTONDOWN: #Если была нажата клавиша мыши
+            mouse_x, mouse_y = event.pos  #узнаем координаты мыши
             for ball in balls[:]:  # Проходим по копии списка шариков
-                if (mouse_x - ball.x) ** 2 + (mouse_y - ball.y) ** 2 <= ball.radius ** 2:
-                    balls.remove(ball)
-                    score += 1
+                if (mouse_x - ball.x) ** 2 + (mouse_y - ball.y) ** 2 <= ball.radius ** 2: # если нажатие было внутри шара
+                    balls.remove(ball) # удаляем
+                    score += 1# начисляем одно очко
 
     # Обновление состояния шариков
     for ball in balls[:]:  # Проходим по копии списка шариков
@@ -96,3 +96,5 @@ while True:
 
     pygame.display.update()
 #-------------------------------Игровой цикл-------------------------------------#
+
+
