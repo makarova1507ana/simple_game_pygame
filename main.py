@@ -1,72 +1,98 @@
-import pygame
+import pygame, sys
 import random
-import sys
+from pygame.locals import QUIT, MOUSEBUTTONDOWN
 
-# Инициализация Pygame
 pygame.init()
 
-# Настройки окна
-width, height = 800, 600
-window = pygame.display.set_mode((width, height))
-pygame.display.set_caption('Кликер с шариками')
+# Установка размера окна
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
-# Цвета
-black = (0, 0, 0)
-white = (255, 255, 255)
-blue = (0, 0, 255)
-red = (255, 0, 0)
+# Установка заголовка окна
+pygame.display.set_caption('Игра Кликер')
 
-# Шрифт
-font = pygame.font.SysFont("monospace", 50)
+# Определение цветов
+NEON_BLUE = (173, 216, 230)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
 
-# Параметры игры
-score = 0
+# Создание объекта Clock для управления FPS
+clock = pygame.time.Clock()
+FPS = 30
+
+# Шрифт для отображения счёта
+font = pygame.font.SysFont(None, 36)
+
+# Класс для шариков
+class Ball:
+    def __init__(self, x, y, radius, color, lifetime):
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.color = color
+        self.lifetime = lifetime  # Время жизни шарика в кадрах
+
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius)
+
+    def update(self):
+        self.lifetime -= 1  # Уменьшаем время жизни шарика
+        return self.lifetime <= 0  # Возвращаем True если шарик должен исчезнуть
+
+# Переменные для управления шариками
 balls = []
-ball_size = 30
-ball_spawn_time = 2000  # Время в миллисекундах между появлениями новых шариков
-ball_life_time = 3000  # Время в миллисекундах, через которое шарик исчезает
+ball_spawn_time = 30  # Время между появлениями новых шариков в кадрах
+ball_timer = 0
 
-# Настройка времени
-last_spawn_time = pygame.time.get_ticks()
+score = 0  # Счётчик очков
 
-# Основной игровой цикл
-running = True
-while running:
-    current_time = pygame.time.get_ticks()
+def draw_score(surface, score):
+    score_text = font.render(f'Score: {score}', True, BLACK)
+    surface.blit(score_text, (10, 10))
 
+#-------------------------------Игровой цикл-------------------------------------#
+while True:
+    # Заполнение окна нежно синим цветом
+    window.fill(NEON_BLUE)
+
+    # Обработка событий pygame
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_pos = pygame.mouse.get_pos()
-            for ball in balls[:]:
-                ball_rect = pygame.Rect(ball['pos'][0] - ball_size // 2, ball['pos'][1] - ball_size // 2, ball_size, ball_size)
-                if ball_rect.collidepoint(mouse_pos):
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = event.pos
+            for ball in balls[:]:  # Проходим по копии списка шариков
+                if (mouse_x - ball.x) ** 2 + (mouse_y - ball.y) ** 2 <= ball.radius ** 2:
                     balls.remove(ball)
                     score += 1
 
-    # Появление новых шариков
-    if current_time - last_spawn_time > ball_spawn_time:
-        ball_pos = [random.randint(0, width), random.randint(0, height)]
-        balls.append({'pos': ball_pos, 'spawn_time': current_time})
-        last_spawn_time = current_time
-
-    # Удаление старых шариков
-    for ball in balls[:]:
-        if current_time - ball['spawn_time'] > ball_life_time:
+    # Обновление состояния шариков
+    for ball in balls[:]:  # Проходим по копии списка шариков
+        if ball.update():
             balls.remove(ball)
+        else:
+            ball.draw(window)
 
-    # Отрисовка объектов
-    window.fill(black)
-    for ball in balls:
-        pygame.draw.circle(window, red, ball['pos'], ball_size)
+    # Логика появления новых шариков
+    ball_timer += 1
+    if ball_timer >= ball_spawn_time:
+        ball_timer = 0
+        new_ball = Ball(
+            x=random.randint(20, WINDOW_WIDTH - 20),
+            y=random.randint(20, WINDOW_HEIGHT - 20),
+            radius=random.randint(10, 30),
+            color=RED,
+            lifetime=random.randint(60, 120)  # Время жизни от 2 до 4 секунд при 30 FPS
+        )
+        balls.append(new_ball)
 
-    # Отображение счета
-    score_text = font.render(f"Счет: {score}", True, white)
-    window.blit(score_text, (10, 10))
+    # Рисуем счёт
+    draw_score(window, score)
 
-    # Обновление экрана
-    pygame.display.flip()
+    # Ограничение FPS
+    clock.tick(FPS)
 
-pygame.quit()
-sys.exit()
+    pygame.display.update()
+#-------------------------------Игровой цикл-------------------------------------#
